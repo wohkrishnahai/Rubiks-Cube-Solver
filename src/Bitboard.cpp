@@ -136,9 +136,7 @@ GenericCube& Bitboard::uPrime() {
 
 GenericCube& Bitboard::u2() { 
   // A 180-degree turn is just doing the move twice
-  u(); 
-  u();
-
+  u(); u();
   return *this; 
 }
 
@@ -175,72 +173,214 @@ GenericCube& Bitboard::dPrime() {
 }
 
 GenericCube& Bitboard::d2() {
-  d();
-  d();
+  d(); d();
   return *this;
 }
 
 
 // FRONT FACE ROTATIONS:
 GenericCube& Bitboard::f() {
+  rotateFaceClockwise(FACE::FRONT);
+
+  // EXTRACT -> CLEAR HOLES (Destination Bits) -> SHIFT & INSERT
+  int u = static_cast<int>(FACE::UP);
+  int r = static_cast<int>(FACE::RIGHT);
+  int d = static_cast<int>(FACE::DOWN);
+  int l = static_cast<int>(FACE::LEFT);
+
+  // F affects: UP(4,5,6), RIGHT(0,7,6), DOWN(0,1,2), LEFT(2,3,4)
+  // Save UP (which will be overwritten first)
+  uint64_t temp_u4 = (bitboard[u] >> (8 * 4)) & 0xFF;
+  uint64_t temp_u5 = (bitboard[u] >> (8 * 5)) & 0xFF;
+  uint64_t temp_u6 = (bitboard[u] >> (8 * 6)) & 0xFF;
+
+  // UP gets LEFT
+  bitboard[u] &= ~((0xFFull << (8 * 4)) | (0xFFull << (8 * 5)) | (0xFFull << (8 * 6)));
+  bitboard[u] |= ((bitboard[l] >> (8 * 2)) & 0xFF) << (8 * 4);
+  bitboard[u] |= ((bitboard[l] >> (8 * 3)) & 0xFF) << (8 * 5);
+  bitboard[u] |= ((bitboard[l] >> (8 * 4)) & 0xFF) << (8 * 6);
+
+  // LEFT gets DOWN
+  bitboard[l] &= ~((0xFFull << (8 * 2)) | (0xFFull << (8 * 3)) | (0xFFull << (8 * 4)));
+  bitboard[l] |= ((bitboard[d] >> (8 * 0)) & 0xFF) << (8 * 2);
+  bitboard[l] |= ((bitboard[d] >> (8 * 1)) & 0xFF) << (8 * 3);
+  bitboard[l] |= ((bitboard[d] >> (8 * 2)) & 0xFF) << (8 * 4);
+
+  // DOWN gets RIGHT (index inversion)
+  bitboard[d] &= ~((0xFFull << (8 * 0)) | (0xFFull << (8 * 1)) | (0xFFull << (8 * 2)));
+  bitboard[d] |= ((bitboard[r] >> (8 * 6)) & 0xFF) << (8 * 0);
+  bitboard[d] |= ((bitboard[r] >> (8 * 7)) & 0xFF) << (8 * 1);
+  bitboard[d] |= ((bitboard[r] >> (8 * 0)) & 0xFF) << (8 * 2);
+
+  // RIGHT gets original UP
+  bitboard[r] &= ~((0xFFull << (8 * 0)) | (0xFFull << (8 * 7)) | (0xFFull << (8 * 6)));
+  bitboard[r] |= (temp_u6 << (8 * 0));
+  bitboard[r] |= (temp_u5 << (8 * 7));
+  bitboard[r] |= (temp_u4 << (8 * 6));
 
   return *this;
 }
 
 GenericCube& Bitboard::fPrime() {
-
+  // fPrime is simply applying f() three times
+  f(); f(); f(); 
   return *this;
 }
 
 GenericCube& Bitboard::f2() {
-
+  f(); f(); 
   return *this;
 }
 
 // BACK FACE ROTATIONS:
 GenericCube& Bitboard::b() {
+  rotateFaceClockwise(FACE::BACK);
+
+  int u = static_cast<int>(FACE::UP);
+  int r = static_cast<int>(FACE::RIGHT);
+  int d = static_cast<int>(FACE::DOWN);
+  int l = static_cast<int>(FACE::LEFT);
+
+  // B affects: UP(0,1,2), LEFT(0,7,6), DOWN(4,5,6), RIGHT(2,3,4)
+  uint64_t temp_u0 = (bitboard[u] >> (8 * 0)) & 0xFF;
+  uint64_t temp_u1 = (bitboard[u] >> (8 * 1)) & 0xFF;
+  uint64_t temp_u2 = (bitboard[u] >> (8 * 2)) & 0xFF;
+
+  // UP gets RIGHT
+  bitboard[u] &= ~((0xFFull << (8 * 0)) | (0xFFull << (8 * 1)) | (0xFFull << (8 * 2)));
+  bitboard[u] |= ((bitboard[r] >> (8 * 2)) & 0xFF) << (8 * 0);
+  bitboard[u] |= ((bitboard[r] >> (8 * 3)) & 0xFF) << (8 * 1);
+  bitboard[u] |= ((bitboard[r] >> (8 * 4)) & 0xFF) << (8 * 2);
+
+  // RIGHT gets DOWN
+  bitboard[r] &= ~((0xFFull << (8 * 2)) | (0xFFull << (8 * 3)) | (0xFFull << (8 * 4)));
+  bitboard[r] |= ((bitboard[d] >> (8 * 6)) & 0xFF) << (8 * 2);
+  bitboard[r] |= ((bitboard[d] >> (8 * 5)) & 0xFF) << (8 * 3);
+  bitboard[r] |= ((bitboard[d] >> (8 * 4)) & 0xFF) << (8 * 4);
+
+  // DOWN gets LEFT
+  bitboard[d] &= ~((0xFFull << (8 * 4)) | (0xFFull << (8 * 5)) | (0xFFull << (8 * 6)));
+  bitboard[d] |= ((bitboard[l] >> (8 * 0)) & 0xFF) << (8 * 6);
+  bitboard[d] |= ((bitboard[l] >> (8 * 7)) & 0xFF) << (8 * 5);
+  bitboard[d] |= ((bitboard[l] >> (8 * 6)) & 0xFF) << (8 * 4);
+
+  // LEFT gets original UP
+  bitboard[l] &= ~((0xFFull << (8 * 0)) | (0xFFull << (8 * 7)) | (0xFFull << (8 * 6)));
+  bitboard[l] |= (temp_u0 << (8 * 0));
+  bitboard[l] |= (temp_u1 << (8 * 7));
+  bitboard[l] |= (temp_u2 << (8 * 6));
 
   return *this;
 }
 
 GenericCube& Bitboard::bPrime() {
-
+  b(); b(); b();
   return *this;
 }
 
 GenericCube& Bitboard::b2() {
-
+  b(); b();
   return *this;
 }
 
 // LEFT FACE ROTATIONS:
 GenericCube& Bitboard::l() {
+  rotateFaceClockwise(FACE::LEFT);
+
+  int u = static_cast<int>(FACE::UP);
+  int f = static_cast<int>(FACE::FRONT);
+  int d = static_cast<int>(FACE::DOWN);
+  int b_face = static_cast<int>(FACE::BACK); // 'b_face' to avoid shadowing function b()
+
+  // L affects: UP(0,7,6), FRONT(0,7,6), DOWN(0,7,6), BACK(4,3,2)
+  uint64_t temp_u0 = (bitboard[u] >> (8 * 0)) & 0xFF;
+  uint64_t temp_u7 = (bitboard[u] >> (8 * 7)) & 0xFF;
+  uint64_t temp_u6 = (bitboard[u] >> (8 * 6)) & 0xFF;
+
+  // UP gets BACK (inverted indices)
+  bitboard[u] &= ~((0xFFull << (8 * 0)) | (0xFFull << (8 * 7)) | (0xFFull << (8 * 6)));
+  bitboard[u] |= ((bitboard[b_face] >> (8 * 4)) & 0xFF) << (8 * 0);
+  bitboard[u] |= ((bitboard[b_face] >> (8 * 3)) & 0xFF) << (8 * 7);
+  bitboard[u] |= ((bitboard[b_face] >> (8 * 2)) & 0xFF) << (8 * 6);
+
+  // BACK gets DOWN (inverted indices)
+  bitboard[b_face] &= ~((0xFFull << (8 * 4)) | (0xFFull << (8 * 3)) | (0xFFull << (8 * 2)));
+  bitboard[b_face] |= ((bitboard[d] >> (8 * 0)) & 0xFF) << (8 * 4);
+  bitboard[b_face] |= ((bitboard[d] >> (8 * 7)) & 0xFF) << (8 * 3);
+  bitboard[b_face] |= ((bitboard[d] >> (8 * 6)) & 0xFF) << (8 * 2);
+
+  // DOWN gets FRONT
+  bitboard[d] &= ~((0xFFull << (8 * 0)) | (0xFFull << (8 * 7)) | (0xFFull << (8 * 6)));
+  bitboard[d] |= ((bitboard[f] >> (8 * 0)) & 0xFF) << (8 * 0);
+  bitboard[d] |= ((bitboard[f] >> (8 * 7)) & 0xFF) << (8 * 7);
+  bitboard[d] |= ((bitboard[f] >> (8 * 6)) & 0xFF) << (8 * 6);
+
+  // FRONT gets original UP
+  bitboard[f] &= ~((0xFFull << (8 * 0)) | (0xFFull << (8 * 7)) | (0xFFull << (8 * 6)));
+  bitboard[f] |= (temp_u0 << (8 * 0));
+  bitboard[f] |= (temp_u7 << (8 * 7));
+  bitboard[f] |= (temp_u6 << (8 * 6));
 
   return *this;
 }
 
 GenericCube& Bitboard::lPrime() {
-
+  l(); l(); l();
   return *this;
 }
 
 GenericCube& Bitboard::l2() {
-
+  l(); l();
   return *this;
 }
 
 // RIGHT FACE ROTATIONS:
 GenericCube& Bitboard::r() {
+  rotateFaceClockwise(FACE::RIGHT);
+
+  int u = static_cast<int>(FACE::UP);
+  int b_face = static_cast<int>(FACE::BACK);
+  int d = static_cast<int>(FACE::DOWN);
+  int f = static_cast<int>(FACE::FRONT);
+
+  // R affects: UP(2,3,4), BACK(6,7,0), DOWN(2,3,4), FRONT(2,3,4)
+  uint64_t temp_u2 = (bitboard[u] >> (8 * 2)) & 0xFF;
+  uint64_t temp_u3 = (bitboard[u] >> (8 * 3)) & 0xFF;
+  uint64_t temp_u4 = (bitboard[u] >> (8 * 4)) & 0xFF;
+
+  // UP gets FRONT
+  bitboard[u] &= ~((0xFFull << (8 * 2)) | (0xFFull << (8 * 3)) | (0xFFull << (8 * 4)));
+  bitboard[u] |= ((bitboard[f] >> (8 * 2)) & 0xFF) << (8 * 2);
+  bitboard[u] |= ((bitboard[f] >> (8 * 3)) & 0xFF) << (8 * 3);
+  bitboard[u] |= ((bitboard[f] >> (8 * 4)) & 0xFF) << (8 * 4);
+
+  // FRONT gets DOWN
+  bitboard[f] &= ~((0xFFull << (8 * 2)) | (0xFFull << (8 * 3)) | (0xFFull << (8 * 4)));
+  bitboard[f] |= ((bitboard[d] >> (8 * 2)) & 0xFF) << (8 * 2);
+  bitboard[f] |= ((bitboard[d] >> (8 * 3)) & 0xFF) << (8 * 3);
+  bitboard[f] |= ((bitboard[d] >> (8 * 4)) & 0xFF) << (8 * 4);
+
+  // DOWN gets BACK (inverted indices)
+  bitboard[d] &= ~((0xFFull << (8 * 2)) | (0xFFull << (8 * 3)) | (0xFFull << (8 * 4)));
+  bitboard[d] |= ((bitboard[b_face] >> (8 * 6)) & 0xFF) << (8 * 2);
+  bitboard[d] |= ((bitboard[b_face] >> (8 * 7)) & 0xFF) << (8 * 3);
+  bitboard[d] |= ((bitboard[b_face] >> (8 * 0)) & 0xFF) << (8 * 4);
+
+  // BACK gets original UP (inverted indices)
+  bitboard[b_face] &= ~((0xFFull << (8 * 6)) | (0xFFull << (8 * 7)) | (0xFFull << (8 * 0)));
+  bitboard[b_face] |= (temp_u2 << (8 * 6));
+  bitboard[b_face] |= (temp_u3 << (8 * 7));
+  bitboard[b_face] |= (temp_u4 << (8 * 0));
 
   return *this;
 }
 
 GenericCube& Bitboard::rPrime() {
-
+  r(); r(); r();
   return *this;
 }
 
 GenericCube& Bitboard::r2() {
-
+  r(); r();
   return *this;
 }
