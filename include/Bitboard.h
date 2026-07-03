@@ -9,6 +9,10 @@ private:
     // The core memory of the cube. 
     // bitboard[0] is UP, bitboard[1] is DOWN, etc. (matching the FACE enum)
     uint64_t bitboard[6]{}; 
+    
+    // Helper Functions to rotate a single face
+    inline void rotateFaceClockwise(FACE face);
+    inline void rotateFaceCounterClockwise(FACE face);
 
 public:
     // Constructor

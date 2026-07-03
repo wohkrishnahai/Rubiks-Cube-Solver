@@ -87,28 +87,160 @@ GenericCube& Bitboard::invert(MOVE ind) {
   return *this;
 }
 
-// STUBS for further commits
-// Returning '*this' allows the code to compile cleanly today.
-GenericCube& Bitboard::u() { return *this; }
-GenericCube& Bitboard::uPrime() { return *this; }
-GenericCube& Bitboard::u2() { return *this; }
+// PRIVATE HELPERS:
+// A single face has 8 facelets (8 bytes = 64 bits).
+// A 90-degree turn moves a facelet 2 spots over (eg: index 0 becomes index 2).
+// 2 spots * 8 bits = 16 bit shift. 
+void Bitboard::rotateFaceClockwise(FACE face) {
+    int f = static_cast<int>(face);
+    // Circular left shift by 16 bits
+    bitboard[f] = (bitboard[f] << 16) | (bitboard[f] >> (64-16));
+}
 
-GenericCube& Bitboard::d() { return *this; }
-GenericCube& Bitboard::dPrime() { return *this; }
-GenericCube& Bitboard::d2() { return *this; }
+void Bitboard::rotateFaceCounterClockwise(FACE face) {
+    int f = static_cast<int>(face);
+    // Circular right shift by 16 bits
+    bitboard[f] = (bitboard[f] >> 16) | (bitboard[f] << (64-16));
+}
 
-GenericCube& Bitboard::f() { return *this; }
-GenericCube& Bitboard::fPrime() { return *this; }
-GenericCube& Bitboard::f2() { return *this; }
+// UP FACE ROTATIONS: (Top Row Cycle)
+GenericCube& Bitboard::u() {
+  rotateFaceClockwise(FACE::UP);
 
-GenericCube& Bitboard::b() { return *this; }
-GenericCube& Bitboard::bPrime() { return *this; }
-GenericCube& Bitboard::b2() { return *this; }
+  // Mask for the top row (indices 0, 1, 2) which occupies the first 24 bits
+  uint64_t mask = 0xFFFFFF; 
 
-GenericCube& Bitboard::l() { return *this; }
-GenericCube& Bitboard::lPrime() { return *this; }
-GenericCube& Bitboard::l2() { return *this; }
+  // U is clockwise: Front -> Left -> Back -> Right -> Front
+  uint64_t temp = bitboard[static_cast<int>(FACE::FRONT)] & mask;
+  bitboard[static_cast<int>(FACE::FRONT)] = (bitboard[static_cast<int>(FACE::FRONT)] & ~mask) | (bitboard[static_cast<int>(FACE::RIGHT)] & mask);
+  bitboard[static_cast<int>(FACE::RIGHT)] = (bitboard[static_cast<int>(FACE::RIGHT)] & ~mask) | (bitboard[static_cast<int>(FACE::BACK)] & mask);
+  bitboard[static_cast<int>(FACE::BACK)]  = (bitboard[static_cast<int>(FACE::BACK)] & ~mask)  | (bitboard[static_cast<int>(FACE::LEFT)] & mask);
+  bitboard[static_cast<int>(FACE::LEFT)]  = (bitboard[static_cast<int>(FACE::LEFT)] & ~mask)  | temp;
 
-GenericCube& Bitboard::r() { return *this; }
-GenericCube& Bitboard::rPrime() { return *this; }
-GenericCube& Bitboard::r2() { return *this; }
+  return *this;
+}
+
+GenericCube& Bitboard::uPrime() { 
+  rotateFaceCounterClockwise(FACE::UP);
+  uint64_t mask = 0xFFFFFF;
+
+  // Reverse cycle: Front -> Right -> Back -> Left -> Front
+  uint64_t temp = bitboard[static_cast<int>(FACE::FRONT)] & mask;
+  bitboard[static_cast<int>(FACE::FRONT)] = (bitboard[static_cast<int>(FACE::FRONT)] & ~mask) | (bitboard[static_cast<int>(FACE::LEFT)] & mask);
+  bitboard[static_cast<int>(FACE::LEFT)]  = (bitboard[static_cast<int>(FACE::LEFT)] & ~mask)  | (bitboard[static_cast<int>(FACE::BACK)] & mask);
+  bitboard[static_cast<int>(FACE::BACK)]  = (bitboard[static_cast<int>(FACE::BACK)] & ~mask)  | (bitboard[static_cast<int>(FACE::RIGHT)] & mask);
+  bitboard[static_cast<int>(FACE::RIGHT)] = (bitboard[static_cast<int>(FACE::RIGHT)] & ~mask) | temp;
+
+  return *this; 
+}
+
+GenericCube& Bitboard::u2() { 
+  // A 180-degree turn is just doing the move twice
+  u(); 
+  u();
+
+  return *this; 
+}
+
+// DOWN FACE ROTATIONS: (Bottom Row Cycle)
+GenericCube& Bitboard::d() { 
+  rotateFaceClockwise(FACE::DOWN);
+
+  // Mask for the bottom row (indices 4, 5, 6). 
+  // Index 4 starts at bit 32. 3 bytes = 24 bits.
+  // So we shift 0xFFFFFF over by 32 bits.
+  uint64_t mask = 0xFFFFFFull << 32; 
+
+  // D is clockwise looking from the bottom: Front -> Right -> Back -> Left -> Front
+  uint64_t temp = bitboard[static_cast<int>(FACE::FRONT)] & mask;
+  bitboard[static_cast<int>(FACE::FRONT)] = (bitboard[static_cast<int>(FACE::FRONT)] & ~mask) | (bitboard[static_cast<int>(FACE::LEFT)] & mask);
+  bitboard[static_cast<int>(FACE::LEFT)]  = (bitboard[static_cast<int>(FACE::LEFT)] & ~mask)  | (bitboard[static_cast<int>(FACE::BACK)] & mask);
+  bitboard[static_cast<int>(FACE::BACK)]  = (bitboard[static_cast<int>(FACE::BACK)] & ~mask)  | (bitboard[static_cast<int>(FACE::RIGHT)] & mask);
+  bitboard[static_cast<int>(FACE::RIGHT)] = (bitboard[static_cast<int>(FACE::RIGHT)] & ~mask) | temp;
+
+  return *this;
+}
+
+GenericCube& Bitboard::dPrime() {
+  rotateFaceCounterClockwise(FACE::DOWN);
+  uint64_t mask = 0xFFFFFFull << 32;
+
+  uint64_t temp = bitboard[static_cast<int>(FACE::FRONT)] & mask;
+  bitboard[static_cast<int>(FACE::FRONT)] = (bitboard[static_cast<int>(FACE::FRONT)] & ~mask) | (bitboard[static_cast<int>(FACE::RIGHT)] & mask);
+  bitboard[static_cast<int>(FACE::RIGHT)] = (bitboard[static_cast<int>(FACE::RIGHT)] & ~mask) | (bitboard[static_cast<int>(FACE::BACK)] & mask);
+  bitboard[static_cast<int>(FACE::BACK)]  = (bitboard[static_cast<int>(FACE::BACK)] & ~mask)  | (bitboard[static_cast<int>(FACE::LEFT)] & mask);
+  bitboard[static_cast<int>(FACE::LEFT)]  = (bitboard[static_cast<int>(FACE::LEFT)] & ~mask)  | temp;
+
+  return *this;
+}
+
+GenericCube& Bitboard::d2() {
+  d();
+  d();
+  return *this;
+}
+
+
+// FRONT FACE ROTATIONS:
+GenericCube& Bitboard::f() {
+
+  return *this;
+}
+
+GenericCube& Bitboard::fPrime() {
+
+  return *this;
+}
+
+GenericCube& Bitboard::f2() {
+
+  return *this;
+}
+
+// BACK FACE ROTATIONS:
+GenericCube& Bitboard::b() {
+
+  return *this;
+}
+
+GenericCube& Bitboard::bPrime() {
+
+  return *this;
+}
+
+GenericCube& Bitboard::b2() {
+
+  return *this;
+}
+
+// LEFT FACE ROTATIONS:
+GenericCube& Bitboard::l() {
+
+  return *this;
+}
+
+GenericCube& Bitboard::lPrime() {
+
+  return *this;
+}
+
+GenericCube& Bitboard::l2() {
+
+  return *this;
+}
+
+// RIGHT FACE ROTATIONS:
+GenericCube& Bitboard::r() {
+
+  return *this;
+}
+
+GenericCube& Bitboard::rPrime() {
+
+  return *this;
+}
+
+GenericCube& Bitboard::r2() {
+
+  return *this;
+}
