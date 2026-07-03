@@ -1,5 +1,6 @@
 #include <iostream>
 #include "../include/Bitboard.h"
+
 using namespace std;
 
 void runTest(string testName, Bitboard& cube) {
