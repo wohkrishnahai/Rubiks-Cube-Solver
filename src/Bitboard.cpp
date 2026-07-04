@@ -78,7 +78,27 @@ void Bitboard::print() const {
 }
 
 GenericCube& Bitboard::move(MOVE ind) {
-  // Implement switch statement later
+  switch (ind) {
+    case MOVE::U: return u();
+    case MOVE::UPRIME: return uPrime();
+    case MOVE::U2: return u2();
+    case MOVE::D: return d();
+    case MOVE::DPRIME: return dPrime();
+    case MOVE::D2: return d2();
+    case MOVE::F: return f();
+    case MOVE::FPRIME: return fPrime();
+    case MOVE::F2: return f2();
+    case MOVE::B: return b();
+    case MOVE::BPRIME: return bPrime();
+    case MOVE::B2: return b2();
+    case MOVE::L: return l();
+    case MOVE::LPRIME: return lPrime();
+    case MOVE::L2: return l2();
+    case MOVE::R: return r();
+    case MOVE::RPRIME: return rPrime();
+    case MOVE::R2: return r2();
+  }
+
   return *this;
 }
 
