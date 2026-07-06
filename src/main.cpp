@@ -1,28 +1,32 @@
 #include <iostream>
-#include "../include/CornerPatternDatabase.h"
+#include <vector>
+#include "../include/Bitboard.h"
+#include "../include/Solver.h"
 using namespace std;
 
 int main() {
-  cout << "=== PATTERN DATABASE GENERATOR ===" << endl;
+    cout << "=== IDA* SOLVER DIAGNOSTICS ===" << endl << endl;
 
-  cout << "1. Allocating 44MB of RAM for the database array..." << endl;
-  CornerPatternDatabase cornerDB;
+    // Initialize a fresh, solved cube
+    Bitboard cube;
 
-  cout << "2. Starting the Breadth-First Search (BFS)..." << endl;
-  // Run the BFS to explore all 88,179,840 states
-  cornerDB.generateDatabase();
+    // Apply a scramble
+    cout << "Scrambling the cube: U R F D L B" << endl;
+    cube.u().r().f().d().l().b();
 
-  string fileName = "corner_database.bin";
-  cout << "3. Saving database to " << fileName << "..." << endl;
+    // Initialize the Solver 
+    // (Automatically loads corner_database.bin into RAM)
+    Solver solver;
 
-  if (cornerDB.saveToFile(fileName)) {
-    cout << "SUCCESS: Database saved to disk safely." << endl;
-  } 
-  else {
-    cout << "ERROR: Failed to write file to disk. Check folder permissions." << endl;
-  }
+    // Run the IDA* search
+    cout << "\nInitiating Search..." << endl;
+    vector<MOVE> solution = solver.solve(cube);
 
-  cout << "==================================" << endl;
+    // Print the optimal move sequence
+    cout << "\n=== SEARCH COMPLETE ===" << endl;
+    Solver::printSolution(solution);
+    cout << "=======================" << endl;
 
-  return 0;
+    return 0;
 }
+
