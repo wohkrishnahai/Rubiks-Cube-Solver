@@ -15,7 +15,7 @@ private:
   vector<MOVE> solution;
 
   // The recursive DFS function for the IDA* Algorithm
-  bool dfs(Bitboard& cube, uint8_t depth, uint8_t bound, MOVE lastMove);
+  bool dfs(Bitboard cube, uint8_t depth, uint8_t bound, MOVE lastMove);
 
 public:
   Solver();
