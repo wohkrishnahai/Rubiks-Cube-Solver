@@ -1,28 +1,36 @@
+
 #include "../include/Solver.h"
 #include "../include/CornerIndexer.h"
+#include "../include/EdgeIndexer.h"
 #include <iostream>
+#include <algorithm> // for max
 using namespace std;
 
-Solver::Solver() {
-  // Load the 44MB file already precomputed into RAM
-  cout << "Loading Pattern Database into RAM..." << endl;
-  if (!cornerDB.loadFromFile("corner_database.bin")) {
-    cerr << "FATAL ERROR: Could not find corner_database.bin!" << endl;
-    exit(1);
-  }
-  cout << "Database loaded successfully." << endl;
+// The constructor must initialize the EdgePatternDatabase objects with their enums
+Solver::Solver() : first6EdgesDB(EDGE_GROUP::FIRST_6), last6EdgesDB(EDGE_GROUP::LAST_6) {
+  cout << "Loading Pattern Databases into RAM (~86.5 MB)..." << endl;
+
+  if (!cornerDB.loadFromFile("corner_database.bin")) exit(1);
+  if (!first6EdgesDB.loadFromFile("first_6_edges.bin")) exit(1);
+  if (!last6EdgesDB.loadFromFile("last_6_edges.bin")) exit(1);
+
+  cout << "All databases loaded successfully." << endl;
 }
 
 bool Solver::dfs(Bitboard& cube, uint8_t depth, uint8_t bound, MOVE lastMove) {
-  // Calculate h(n) - The estimated cost to solve the corners
-  uint32_t cornerIndex = CornerIndexer::getIndex(cube);
-  uint8_t h_n = cornerDB.getNumMoves(cornerIndex);
+  // Calculate heuristics for all three databases
+  uint8_t h_corners = cornerDB.getNumMoves(CornerIndexer::getIndex(cube));
+  uint8_t h_first6 = first6EdgesDB.getNumMoves(EdgeIndexer::getFirst6EdgesIndex(cube));
+  uint8_t h_last6 = last6EdgesDB.getNumMoves(EdgeIndexer::getLast6EdgesIndex(cube));
+
+  // Take the maximum (Admissible Heuristic)
+  uint8_t h_n = max({h_corners, h_first6, h_last6});
 
   // IDA* Pruning Condition: f(n) = g(n) + h(n)
   // If our current moves + estimated remaining moves exceeds our limit, cut the branch.
   if (depth + h_n > bound) return false;
 
-  // Win Condition (Since we only have corners right now, just check if corners are solved)
+  // Win Condition (All 3 must be 0)
   if (depth <= bound && h_n == 0) return true;
 
   // Standard array of all 18 moves
@@ -55,13 +63,9 @@ bool Solver::dfs(Bitboard& cube, uint8_t depth, uint8_t bound, MOVE lastMove) {
 
     // To properly backtrack in our bitboard, we must apply the inverse move.
     // For now, doing the move 3 more times acts as an inverse (for 90-deg turns).
-    if ((int)nextMove % 3 == 0) { // Clockwise
-      cube.move((MOVE)((int)nextMove + 1)); 
-    } else if ((int)nextMove % 3 == 1) { // Counter
-      cube.move((MOVE)((int)nextMove - 1));
-    } else { // 180 degrees
-      cube.move(nextMove);
-    }
+    if ((int)nextMove % 3 == 0) cube.move((MOVE)((int)nextMove +1)); // Clockwise
+    else if ((int)nextMove % 3 == 1) cube.move((MOVE)((int)nextMove -1)); // Counter
+    else cube.move(nextMove); // 180 degrees
   }
 
   return false;
@@ -69,14 +73,17 @@ bool Solver::dfs(Bitboard& cube, uint8_t depth, uint8_t bound, MOVE lastMove) {
 
 vector<MOVE> Solver::solve(Bitboard cube) {
   solution.clear();
+  
+  uint8_t h_corners = cornerDB.getNumMoves(CornerIndexer::getIndex(cube));
+  uint8_t h_first6 = first6EdgesDB.getNumMoves(EdgeIndexer::getFirst6EdgesIndex(cube));
+  uint8_t h_last6 = last6EdgesDB.getNumMoves(EdgeIndexer::getLast6EdgesIndex(cube));
 
-  uint32_t initialIndex = CornerIndexer::getIndex(cube);
-  uint8_t startBound = cornerDB.getNumMoves(initialIndex);
+  uint8_t startBound = max({h_corners, h_first6, h_last6});
 
   cout << "Starting IDA* Search..." << endl;
 
   // Iteratively increase the depth bound.
-  // If the corners are 7 moves away, start the search limited to 7 moves.
+  // If the corners are 'x' moves away, start the search limited to 'x' moves.
   for (uint8_t bound = startBound; bound <= 20; ++bound) {
     cout << "Searching depth bound: " << (int)bound << endl;
 

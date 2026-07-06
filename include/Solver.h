@@ -3,12 +3,15 @@
 
 #include "Bitboard.h"
 #include "CornerPatternDatabase.h"
+#include "EdgePatternDatabase.h"
 #include <vector>
 using namespace std;
 
 class Solver {
 private:
   CornerPatternDatabase cornerDB;
+  EdgePatternDatabase first6EdgesDB;
+  EdgePatternDatabase last6EdgesDB;
   vector<MOVE> solution;
 
   // The recursive DFS function for the IDA* Algorithm

@@ -1,33 +1,26 @@
 #include <iostream>
-#include "../include/EdgePatternDatabase.h"
+#include <vector>
+#include "../include/Bitboard.h"
+#include "../include/Solver.h"
 using namespace std;
 
 int main() {
-  cout << "=== EDGE PATTERN DATABASE GENERATOR ===" << endl << endl;
+  cout << "=== FULL RUBIK'S CUBE IDA* SOLVER ===" << endl << endl;
+  Bitboard cube;
 
-  // FIRST 6 EDGES:
-  cout << "Allocating 21MB RAM for First 6 Edges..." << endl;
-  EdgePatternDatabase first6DB(EDGE_GROUP::FIRST_6);
-  first6DB.generateDatabase();
+  // Scramble the cube
+  cout << "Scrambling the cube: U R F D L B" << endl;
+  cube.u().r().f().d().l().b();
 
-  string file1 = "first_6_edges.bin";
-  cout << "Saving database to " << file1 << "..." << endl;
-  if (first6DB.saveToFile(file1)) cout << "SUCCESS: " << file1 << " saved." << endl;
-  else cout << "ERROR: Failed to write " << file1 << endl;
+  // Initialize the Solver (Loads all 3 databases)
+  Solver solver;
 
-  cout << "\n-----------------------------------\n" << endl;
+  cout << "\nInitiating Search..." << endl;
+  vector<MOVE> solution = solver.solve(cube);
 
-  // LAST 6 EDGES:
-  cout << "Allocating 21MB RAM for Last 6 Edges..." << endl;
-  EdgePatternDatabase last6DB(EDGE_GROUP::LAST_6);
-  last6DB.generateDatabase();
-
-  string file2 = "last_6_edges.bin";
-  cout << "Saving database to " << file2 << "..." << endl;
-  if (last6DB.saveToFile(file2)) cout << "SUCCESS: " << file2 << " saved." << endl;
-  else cout << "ERROR: Failed to write " << file2 << endl;
-
-  cout << "\n===================================" << endl;
+  cout << "\n=== SEARCH COMPLETE ===" << endl;
+  Solver::printSolution(solution);
+  cout << "=======================" << endl;
 
   return 0;
 }
