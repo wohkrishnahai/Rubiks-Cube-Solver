@@ -11,27 +11,31 @@ int main() {
 
   int choice;
   cout << "Select mode:" << endl;
-  cout << "1. Random scramble" << endl;
-  cout << "2. Enter custom scramble" << endl;
+  cout << "0: Exit" << endl;
+  cout << "1: Random scramble" << endl;
+  cout << "2: Enter custom scramble" << endl;
   cout << "Choice: ";
 
   if (!(cin >> choice)) {
-    cout << "Invalid input. Exiting..." << endl;
+    cout << "Invalid input. Exiting." << endl;
     return 1;
+  }
+
+  if (choice == 0) {
+    cout << "Exiting. Thank You!" << endl;
+    return 0;
   }
 
   vector<MOVE> scramble;
 
   if (choice == 1) {
     int length;
-    cout << "Enter scramble length (eg: 20): ";
+    cout << "Enter scramble length (eg- 20): ";
   
-    // Error handling if the user types a letter or a negative number
+    // Fail fast on invalid or negative input
     if (!(cin >> length) || length <= 0) {
-      cout << "Invalid length detected. Defaulting to 20 moves." << endl;
-      cin.clear(); // Clear the error flag
-      cin.ignore(10000, '\n'); // Discard bad input
-      length = 20;
+      cout << "Invalid length detected. Exiting." << endl;
+      return 1;
     }
 
     scramble = Scrambler::generateScramble(length);
@@ -57,7 +61,6 @@ int main() {
   }
 
   Bitboard cube;
-
   // Apply the scramble to the cube
   for (MOVE m : scramble) {
     cube.move(m);

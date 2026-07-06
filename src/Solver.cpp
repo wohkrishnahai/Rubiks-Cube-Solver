@@ -3,7 +3,7 @@
 #include "../include/CornerIndexer.h"
 #include "../include/EdgeIndexer.h"
 #include <iostream>
-// #include <algorithm> // for max
+#include <chrono>
 using namespace std;
 
 // The constructor must initialize the EdgePatternDatabase objects with their enums
@@ -95,6 +95,8 @@ vector<MOVE> Solver::solve(Bitboard cube) {
   uint8_t startBound = max({h_corners, h_first6, h_last6});
 
   cout << "Starting IDA* Search..." << endl;
+  // Start the timer exactly when the algorithm begins
+  auto start = chrono::high_resolution_clock::now();
 
   // Iteratively increase the depth bound.
   // If the corners are 'x' moves away, start the search limited to 'x' moves.
@@ -103,7 +105,14 @@ vector<MOVE> Solver::solve(Bitboard cube) {
 
     // The initial 'lastMove' doesn't matter
     if (dfs(cube, 0, bound, MOVE::U)) {
+      // Stop the timer the exact microsecond a solution is found
+      auto stop = chrono::high_resolution_clock::now();
+      auto duration = chrono::duration_cast<chrono::milliseconds>(stop - start);
+
       cout << "Solution Found!" << endl;
+      cout << "Search Time: " << duration.count() << " ms (" 
+        << duration.count() / 1000.0 << " seconds)" << endl;
+
       return solution;
     }
   }
