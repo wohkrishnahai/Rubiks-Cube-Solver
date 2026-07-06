@@ -1,30 +1,28 @@
 #include <iostream>
-#include "../include/Bitboard.h"
-#include "../include/CornerIndexer.h"
+#include "../include/CornerPatternDatabase.h"
 using namespace std;
 
 int main() {
-  cout << "=== Perfect Hashing TESTING ===\n\n";
-  Bitboard cube;
+  cout << "=== PATTERN DATABASE GENERATOR ===" << endl;
 
-  // A solved cube has zero inversions and zero twists.
-  uint32_t solvedIndex = CornerIndexer::getIndex(cube);
-  cout << "Solved Cube Index: " << solvedIndex << " (Expected: 0)\n";
+  cout << "1. Allocating 44MB of RAM for the database array..." << endl;
+  CornerPatternDatabase cornerDB;
 
-  // Scramble it
-  cube.u().r().f();
-  uint32_t scrambledIndex = CornerIndexer::getIndex(cube);
-  cout << "Scrambled Cube Index: " << scrambledIndex << "\n";
+  cout << "2. Starting the Breadth-First Search (BFS)..." << endl;
+  // Run the BFS to explore all 88,179,840 states
+  cornerDB.generateDatabase();
 
-  // Verify it's within bounds
-  if (scrambledIndex > 0 && scrambledIndex < 88179840) {
-    cout << "\nPASS: Hash is within valid database bounds!\n";
+  string fileName = "corner_database.bin";
+  cout << "3. Saving database to " << fileName << "..." << endl;
+
+  if (cornerDB.saveToFile(fileName)) {
+    cout << "SUCCESS: Database saved to disk safely." << endl;
   } 
   else {
-    cout << "\nFAIL: Hash out of bounds.\n";
+    cout << "ERROR: Failed to write file to disk. Check folder permissions." << endl;
   }
 
-  cout << "\n=============================\n";
+  cout << "==================================" << endl;
 
   return 0;
 }

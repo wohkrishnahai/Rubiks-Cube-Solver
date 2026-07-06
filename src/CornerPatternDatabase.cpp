@@ -21,8 +21,8 @@ void CornerPatternDatabase::generateDatabase() {
   int nodesVisited = 1;
   uint8_t currentDepth = 0;
 
-  cout << "Starting BFS Database Generation. This will take a few minutes...\n";
-  cout << "Total States to map: 88,179,840\n\n";
+  cout << "Starting BFS Database Generation. This will take a few minutes..." << endl;
+  cout << "Total States to map: 88,179,840" << endl << endl;
 
   while (!q.empty()) {
     Bitboard currentCube = q.front();
@@ -35,7 +35,7 @@ void CornerPatternDatabase::generateDatabase() {
     if (currentMoves > currentDepth) {
       currentDepth = currentMoves;
       cout << "Reached Depth: " << (int)currentDepth 
-        << " | Nodes Mapped: " << nodesVisited << "\n";
+        << " | Nodes Mapped: " << nodesVisited << endl;
     }
 
     // 11 is the mathematical maximum number of moves to solve any corner state.
@@ -69,6 +69,6 @@ void CornerPatternDatabase::generateDatabase() {
     }
   }
 
-  cout << "\nDatabase Generation Complete!\n";
-  cout << "Total Nodes Successfully Mapped: " << nodesVisited << "\n";
+  cout << "Database Generation Complete!" << endl;
+  cout << "Total Nodes Successfully Mapped: " << nodesVisited << endl;
 }
