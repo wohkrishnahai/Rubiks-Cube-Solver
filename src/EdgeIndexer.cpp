@@ -46,7 +46,6 @@ uint32_t EdgeIndexer::getFirst6EdgesIndex(const GenericCube& cube) {
 
   int perm[6];
   int orient[6];
-  int currentIdx = 0;
 
   // Scan all 12 slots to find where the FIRST 6 edges (IDs 0-5) are currently sitting
   for (int i = 0; i < 12; ++i) {
@@ -57,14 +56,12 @@ uint32_t EdgeIndexer::getFirst6EdgesIndex(const GenericCube& cube) {
 
     // If this slot holds one of our target edges (IDs 0 through 5)
     if (edgeId >= 0 && edgeId < 6) {
-      perm[currentIdx] = i; // Store WHICH slot it is in (0-11)
+      perm[edgeId] = i;  // Map the specific edge to its physical slot
 
       // Calculate Orientation (Base 2)
       // If the UP/DOWN color is on the UP/DOWN face, it is oriented (0)
-      if (c1 == COLOR::WHITE || c1 == COLOR::GREEN) orient[currentIdx] = 0;
-      else orient[currentIdx] = 1;
-
-      currentIdx++;
+      if (c1 == COLOR::WHITE || c1 == COLOR::GREEN) orient[edgeId] = 0;
+      else orient[edgeId] = 1;
     }
   }
 
@@ -77,9 +74,9 @@ uint32_t EdgeIndexer::getFirst6EdgesIndex(const GenericCube& cube) {
   // Permutation Hash (Lehmer Code for P(12,6))
   uint32_t permutationRank = 0;
   for (int i = 0; i < 6; ++i) {
-    int inversions = 0;
-    for (int j = i+1; j < 6; ++j) {
-      if (perm[i] > perm[j]) inversions++;
+    int inversions = perm[i]; // Start with the physical slot (0 to 11)
+    for (int j = 0; j < i; ++j) {
+      if (perm[j] < perm[i]) inversions--;
     }
 
     // Instead of standard factorial, we calculate remaining slots
@@ -115,7 +112,6 @@ uint32_t EdgeIndexer::getLast6EdgesIndex(const GenericCube& cube) {
 
   int perm[6];
   int orient[6];
-  int currentIdx = 0;
 
   // Scan all 12 slots to find where the LAST 6 edges (IDs 6-11) are currently sitting
   for (int i = 0; i < 12; ++i) {
@@ -126,13 +122,18 @@ uint32_t EdgeIndexer::getLast6EdgesIndex(const GenericCube& cube) {
 
     // Target the last 6 edges (IDs 6 through 11)
     if (edgeId >= 6 && edgeId < 12) {
-      perm[currentIdx] = i; 
+      perm[edgeId -6] = i; 
 
       // Calculate Orientation (Base 2)
-      if (c1 == COLOR::WHITE || c1 == COLOR::GREEN) orient[currentIdx] = 0;
-      else orient[currentIdx] = 1;
-
-      currentIdx++;
+      // D-edges (6,7) use Up/Down colors (0,1). 
+      // E-slice edges (8-11) use Front/Back colors (2,3).
+      if (edgeId == 6 || edgeId == 7) {
+        if ((int)c1 == 0 || (int)c1 == 1) orient[edgeId -6] = 0;
+        else orient[edgeId -6] = 1;
+      } else {
+        if ((int)c1 == 2 || (int)c1 == 3) orient[edgeId -6] = 0;
+        else orient[edgeId -6] = 1;
+      }
     }
   }
 
@@ -145,9 +146,9 @@ uint32_t EdgeIndexer::getLast6EdgesIndex(const GenericCube& cube) {
   // Permutation Hash (Lehmer Code for P(12,6))
   uint32_t permutationRank = 0;
   for (int i = 0; i < 6; ++i) {
-    int inversions = 0;
-    for (int j = i + 1; j < 6; ++j) {
-      if (perm[i] > perm[j]) inversions++;
+    int inversions = perm[i];
+    for (int j = 0; j < i; ++j) {
+      if (perm[j] < perm[i]) inversions--;
     }
 
     permutationRank += inversions * (factorial(11-i) / factorial(12-6));

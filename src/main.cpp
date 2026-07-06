@@ -1,32 +1,33 @@
 #include <iostream>
-#include <vector>
-#include "../include/Bitboard.h"
-#include "../include/Solver.h"
+#include "../include/EdgePatternDatabase.h"
 using namespace std;
 
 int main() {
-    cout << "=== IDA* SOLVER DIAGNOSTICS ===" << endl << endl;
+  cout << "=== EDGE PATTERN DATABASE GENERATOR ===" << endl << endl;
 
-    // Initialize a fresh, solved cube
-    Bitboard cube;
+  // FIRST 6 EDGES:
+  cout << "Allocating 21MB RAM for First 6 Edges..." << endl;
+  EdgePatternDatabase first6DB(EDGE_GROUP::FIRST_6);
+  first6DB.generateDatabase();
 
-    // Apply a scramble
-    cout << "Scrambling the cube: U R F D L B" << endl;
-    cube.u().r().f().d().l().b();
+  string file1 = "first_6_edges.bin";
+  cout << "Saving database to " << file1 << "..." << endl;
+  if (first6DB.saveToFile(file1)) cout << "SUCCESS: " << file1 << " saved." << endl;
+  else cout << "ERROR: Failed to write " << file1 << endl;
 
-    // Initialize the Solver 
-    // (Automatically loads corner_database.bin into RAM)
-    Solver solver;
+  cout << "\n-----------------------------------\n" << endl;
 
-    // Run the IDA* search
-    cout << "\nInitiating Search..." << endl;
-    vector<MOVE> solution = solver.solve(cube);
+  // LAST 6 EDGES:
+  cout << "Allocating 21MB RAM for Last 6 Edges..." << endl;
+  EdgePatternDatabase last6DB(EDGE_GROUP::LAST_6);
+  last6DB.generateDatabase();
 
-    // Print the optimal move sequence
-    cout << "\n=== SEARCH COMPLETE ===" << endl;
-    Solver::printSolution(solution);
-    cout << "=======================" << endl;
+  string file2 = "last_6_edges.bin";
+  cout << "Saving database to " << file2 << "..." << endl;
+  if (last6DB.saveToFile(file2)) cout << "SUCCESS: " << file2 << " saved." << endl;
+  else cout << "ERROR: Failed to write " << file2 << endl;
 
-    return 0;
+  cout << "\n===================================" << endl;
+
+  return 0;
 }
-
