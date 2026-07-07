@@ -1,4 +1,3 @@
-
 #include "../include/Solver.h"
 #include "../include/CornerIndexer.h"
 #include "../include/EdgeIndexer.h"
@@ -21,7 +20,6 @@ bool Solver::dfs(Bitboard cube, uint8_t depth, uint8_t bound, MOVE lastMove) {
   // Calculate heuristics for all three databases
   // IDA* Pruning Condition: f(n) = g(n) + h(n)
   // Optimization: If our current moves + estimated remaining moves exceeds our limit, cut the branch.
-
   uint8_t h_corners = cornerDB.getNumMoves(CornerIndexer::getIndex(cube));
   if (depth + h_corners > bound) return false;
 
@@ -87,7 +85,7 @@ bool Solver::dfs(Bitboard cube, uint8_t depth, uint8_t bound, MOVE lastMove) {
 
 vector<MOVE> Solver::solve(Bitboard cube) {
   solution.clear();
-  
+
   uint8_t h_corners = cornerDB.getNumMoves(CornerIndexer::getIndex(cube));
   uint8_t h_first6 = first6EdgesDB.getNumMoves(EdgeIndexer::getFirst6EdgesIndex(cube));
   uint8_t h_last6 = last6EdgesDB.getNumMoves(EdgeIndexer::getLast6EdgesIndex(cube));
@@ -109,7 +107,7 @@ vector<MOVE> Solver::solve(Bitboard cube) {
       auto stop = chrono::high_resolution_clock::now();
       auto duration = chrono::duration_cast<chrono::milliseconds>(stop - start);
 
-      cout << "Solution Found!" << endl;
+      cout << "\nSolution Found!" << endl;
       cout << "Search Time: " << duration.count() << " ms (" 
         << duration.count() / 1000.0 << " seconds)" << endl;
 
@@ -127,7 +125,7 @@ void Solver::printSolution(const vector<MOVE>& sol) {
     "L", "L'", "L2", "R", "R'", "R2"
   };
 
-  cout << "Solution (" << sol.size() << " moves): ";
+  // Print the actual moves
   for (MOVE m : sol) {
     cout << moveNames[static_cast<int>(m)] << " ";
   }

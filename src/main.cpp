@@ -73,6 +73,7 @@ int main() {
   vector<MOVE> solution = solver.solve(cube);
 
   cout << "\n=== SEARCH COMPLETE ===" << endl;
+  cout << "Solution (" << solution.size() << " moves): ";
   Solver::printSolution(solution);
   cout << "=======================" << endl;
 
